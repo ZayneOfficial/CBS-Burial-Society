@@ -1,0 +1,779 @@
+:root {
+  --green: #198754;
+  --red: #dc3545;
+  --dark: #111827;
+  --ink: #172033;
+  --muted: #667085;
+  --bg: #f4f6f8;
+  --card: #fff;
+  --border: #e3e7ec;
+  --blue: #1261a0;
+  --whatsapp: #25d366;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* =========================
+   LOGIN
+========================= */
+
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #101318, #263238);
+}
+
+.login-card {
+  width: min(440px, 100%);
+  background: white;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 18px 50px #0005;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.brand-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 12px;
+  background: #111;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+.brand h1 {
+  font-size: 25px;
+  margin: 0;
+}
+
+.brand p {
+  color: var(--muted);
+  margin: 3px 0 0;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  border: 0;
+  padding: 13px;
+  min-height: 46px;
+  border-radius: 10px;
+  background: #eef1f4;
+  font-weight: 700;
+}
+
+.tab.active {
+  background: #111;
+  color: #fff;
+}
+
+/* =========================
+   FORMS
+========================= */
+
+label {
+  display: block;
+  font-weight: 700;
+  margin: 13px 0 6px;
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid #cfd6df;
+  border-radius: 9px;
+  padding: 12px;
+  background: #fff;
+  min-height: 46px;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px #1261a018;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.btn {
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 14px;
+  min-height: 44px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.btn-large {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 18px;
+}
+
+.btn-dark {
+  background: #111;
+  color: #fff;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn-green {
+  background: var(--green);
+  color: #fff;
+}
+
+.btn-red {
+  background: var(--red);
+  color: #fff;
+}
+
+.btn-light {
+  background: #eef1f4;
+  color: #172033;
+}
+
+.whatsapp {
+  background: var(--whatsapp);
+  color: #fff;
+}
+
+.message {
+  min-height: 22px;
+  margin-top: 12px;
+  font-weight: 700;
+}
+
+.message.error {
+  color: var(--red);
+}
+
+.message.success {
+  color: var(--green);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 15px 0 0;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.app-header {
+  background: #111;
+  color: #fff;
+  padding: 12px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 10px #0004;
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.header-sub {
+  font-size: 12px;
+  color: #b9c0c8;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+/* =========================
+   MAIN
+========================= */
+
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: auto;
+  padding: 14px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 15px;
+  box-shadow: 0 2px 8px #00000008;
+  min-width: 0;
+}
+
+.stat-value {
+  font-size: 25px;
+  font-weight: 900;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.section-title h2,
+.section-title h3 {
+  font-size: 18px;
+  margin: 0;
+}
+
+/* =========================
+   FORMS / TOOLBARS
+========================= */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.toolbar input {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.toolbar select {
+  flex: 1 1 260px;
+  min-width: 180px;
+}
+
+.filters {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.filter.active {
+  outline: 3px solid #1112;
+}
+
+/* =========================
+   TABLES
+========================= */
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+  background: #fff;
+}
+
+th,
+td {
+  padding: 10px 9px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+th {
+  background: #f7f8fa;
+  font-size: 12px;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.paid {
+  background: #dff7e8;
+  color: #126c3f;
+}
+
+.not-paid {
+  background: #ffe1e4;
+  color: #a41e2c;
+}
+
+.empty {
+  text-align: center;
+  padding: 25px;
+  color: var(--muted);
+}
+
+/* =========================
+   MEMBER DETAILS
+========================= */
+
+.member-hero {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.info-box {
+  background: #f7f8fa;
+  border-radius: 10px;
+  padding: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.info-box b {
+  display: block;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+/* =========================
+   EDIT PANEL
+========================= */
+
+.edit-panel {
+  margin: 12px 0;
+  padding: 14px;
+  border: 2px solid #1261a033;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+/* =========================
+   PAGINATION
+========================= */
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.pagination button {
+  min-width: 90px;
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 1000px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .member-hero {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+  body {
+    font-size: 14px;
+  }
+
+  .app-header {
+    padding: 10px;
+  }
+
+  .header-title {
+    font-size: 17px;
+  }
+
+  .header-sub {
+    font-size: 11px;
+  }
+
+  .container {
+    padding: 8px;
+  }
+
+  .card {
+    padding: 11px;
+    border-radius: 12px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .stat-value {
+    font-size: 21px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .form-grid .full {
+    grid-column: auto;
+  }
+
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar input,
+  .toolbar select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .toolbar .btn {
+    width: 100%;
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+
+  .filters .btn {
+    width: 100%;
+  }
+
+  .filters #whatsappAll {
+    grid-column: 1 / -1;
+  }
+
+  .section-title {
+    align-items: flex-start;
+  }
+
+  .section-title h2 {
+    font-size: 17px;
+  }
+
+  .member-hero {
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+
+  .info-box {
+    padding: 10px;
+  }
+
+  .pagination {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    padding: 8px 0;
+    z-index: 10;
+  }
+
+  .pagination button {
+    min-height: 46px;
+  }
+
+  /* Make table text slightly easier to read */
+  th,
+  td {
+    padding: 9px 8px;
+  }
+
+  /* Allow the table to scroll without moving the entire page */
+  .table-wrap {
+    max-width: 100%;
+  }
+}
+
+/* =========================
+   SMALL ANDROID PHONES
+========================= */
+
+@media (max-width: 480px) {
+  .login-page {
+    padding: 10px;
+    place-items: start center;
+    padding-top: 25px;
+  }
+
+  .login-card {
+    padding: 17px;
+    border-radius: 14px;
+  }
+
+  .brand h1 {
+    font-size: 21px;
+  }
+
+  .brand-icon {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    font-size: 20px;
+  }
+
+  .tabs {
+    gap: 5px;
+  }
+
+  .tab {
+    padding: 11px 7px;
+    font-size: 13px;
+  }
+
+  .header-inner {
+    gap: 6px;
+  }
+
+  .header-title {
+    font-size: 16px;
+  }
+
+  .app-header .btn {
+    padding: 9px 10px;
+    min-height: 42px;
+  }
+
+  .stats {
+    gap: 6px;
+  }
+
+  .stats .card {
+    padding: 10px;
+  }
+
+  .stat-value {
+    font-size: 19px;
+  }
+
+  .container {
+    padding: 6px;
+  }
+
+  .card {
+    padding: 10px;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filters #whatsappAll {
+    grid-column: auto;
+  }
+
+  .member-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    flex-wrap: wrap;
+  }
+
+  .section-title .btn {
+    width: 100%;
+  }
+
+  .pagination {
+    gap: 6px;
+  }
+
+  .pagination button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pagination .small {
+    text-align: center;
+  }
+}
+
+/* =========================
+   VERY SMALL PHONES
+========================= */
+
+@media (max-width: 360px) {
+  .header-title {
+    font-size: 14px;
+  }
+
+  .header-sub {
+    font-size: 10px;
+  }
+
+  .header-inner .btn {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .pagination {
+    flex-direction: column;
+  }
+
+  .pagination button {
+    width: 100%;
+  }
+
+  .pagination .small {
+    order: -1;
+  }
+}
+
+/* WhatsApp buttons - mobile fix */
+@media (max-width: 560px) {
+  .whatsapp {
+    padding: 9px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  td .whatsapp {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+.table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}

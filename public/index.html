@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Burial Society - Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <div class="brand">
+      <div class="brand-icon">✝</div>
+      <div>
+        <h1>Burial Society</h1>
+        <p>Management System</p>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="admin">Admin Login</button>
+      <button class="tab" data-tab="member">Member Login</button>
+    </div>
+
+    <section id="admin-login" class="login-panel">
+      <form id="adminForm">
+        <label>Email</label>
+        <input id="adminEmail" type="email" placeholder="Admin email" required>
+        <label>Password</label>
+        <input id="adminPassword" type="password" placeholder="Password" required>
+        <button class="btn btn-dark btn-large" type="submit">Login as Admin</button>
+      </form>
+    </section>
+
+    <section id="member-login" class="login-panel hidden">
+      <form id="memberForm">
+        <label>VN Number</label>
+        <input id="memberVN" placeholder="VN001" required>
+        <label>Phone</label>
+        <input id="memberPhone" inputmode="tel" placeholder="0711111111" required>
+        <button class="btn btn-primary btn-large" type="submit">Login as Member</button>
+      </form>
+    </section>
+
+   
+  </main>
+
+<script>
+const tabs = document.querySelectorAll(".tab");
+tabs.forEach(tab => tab.addEventListener("click", () => {
+  tabs.forEach(t => t.classList.remove("active"));
+  tab.classList.add("active");
+  document.getElementById("admin-login").classList.toggle("hidden", tab.dataset.tab !== "admin");
+  document.getElementById("member-login").classList.toggle("hidden", tab.dataset.tab !== "member");
+}));
+
+const message = document.getElementById("loginMessage");
+function showMessage(text, ok=false) {
+  message.textContent = text;
+  message.className = "message " + (ok ? "success" : "error");
+}
+
+document.getElementById("adminForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        email: adminEmail.value,
+        password: adminPassword.value
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+    localStorage.setItem("session", JSON.stringify({ role:"admin", admin:data.admin }));
+    location.href = "/admin.html";
+  } catch (err) { showMessage(err.message); }
+});
+
+document.getElementById("memberForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        vn_number: memberVN.value,
+        phone: memberPhone.value
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+    localStorage.setItem("session", JSON.stringify({
+      role:"member",
+      member_id:data.member.member_id,
+      vn_number:data.member.vn_number,
+      member:data.member
+    }));
+    location.href = "/member.html";
+  } catch (err) { showMessage(err.message); }
+});
+</script>
+</body>
+</html>

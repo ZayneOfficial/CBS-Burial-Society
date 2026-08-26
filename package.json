@@ -1,0 +1,25 @@
+{
+  "name": "burial-society-management-system",
+  "version": "1.0.0",
+  "description": "Burial Society Management System using Node.js, Express, MongoDB Atlas and vanilla JavaScript.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed:admin": "node seed/seedAdmin.js",
+    "seed:members": "node seed/seedMembers.js",
+    "import:excel": "node import-excel.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "mongoose": "^8.18.0"
+  },
+  "devDependencies": {
+    "xlsx": "^0.18.5"
+  }
+}
