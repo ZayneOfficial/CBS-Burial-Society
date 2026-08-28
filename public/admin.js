@@ -39,12 +39,63 @@ async function loadMembers(){
   }catch(e){ message($("memberMessage"),e.message); }
 }
 
-async function loadFunerals(){
+async function loadFunerals(keepSelected=true){
   try{
+    const previous = keepSelected ? $("funeralSelect").value : "";
     const data = await api("/api/funerals");
     $("funeralSelect").innerHTML = `<option value="">Select a funeral...</option>` +
       data.funerals.map(f=>`<option value="${f._id}">${esc(f.deceased_name)} — ${dateOnly(f.funeral_date)} — ${money(f.contribution_amount)}</option>`).join("");
+    if(previous && data.funerals.some(f=>f._id===previous)){
+      $("funeralSelect").value = previous;
+      await loadPayments();
+    }
   }catch(e){ message($("funeralMessage"),e.message); }
+}
+
+function closeEditFuneral(){
+  $("editFuneralPanel").classList.add("hidden");
+  $("editFuneralPanel").removeAttribute("data-id");
+}
+
+async function editSelectedFuneral(){
+  const id=$("funeralSelect").value;
+  if(!id){alert("Select a funeral first.");return;}
+  try{
+    const data=await api("/api/funerals");
+    const f=data.funerals.find(x=>x._id===id);
+    if(!f){alert("Funeral not found.");return;}
+    $("editFuneralPanel").dataset.id=f._id;
+    $("editFuneralName").value=f.deceased_name||"";
+    $("editFuneralDate").value=f.funeral_date ? new Date(f.funeral_date).toISOString().slice(0,10) : "";
+    $("editFuneralAmount").value=Number(f.contribution_amount||0);
+    $("editFuneralPanel").classList.remove("hidden");
+    $("editFuneralPanel").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){message($("funeralMessage"),e.message)}
+}
+
+async function deleteSelectedFuneral(){
+  const id=$("funeralSelect").value;
+  if(!id){alert("Select a funeral first.");return;}
+  const option=$("funeralSelect").selectedOptions[0];
+  const label=option ? option.textContent : "this funeral";
+  const confirmed=confirm(
+    "⚠️ DELETE FUNERAL\n\n" +
+    `Are you sure you want to permanently delete:\n${label}\n\n` +
+    "This will also permanently delete ALL payment records belonging to this funeral.\n\n" +
+    "This action cannot be undone.\n\nClick OK to continue."
+  );
+  if(!confirmed)return;
+  try{
+    const data=await api(`/api/funerals/${id}`,{method:"DELETE"});
+    closeEditFuneral();
+    $("funeralSelect").value="";
+    currentPayments=[]; currentFuneral=null;
+    $("paymentBody").innerHTML=`<tr><td colspan="8" class="empty">Select a funeral.</td></tr>`;
+    $("paymentSummary").textContent="Select a funeral to begin.";
+    updateStats();
+    message($("funeralMessage"),`${data.message} ${data.payments_deleted} payment records removed.`,true);
+    await loadFunerals(false);
+  }catch(e){message($("funeralMessage"),e.message)}
 }
 
 async function loadPayments(){
@@ -245,6 +296,34 @@ $("memberForm").addEventListener("submit",async e=>{
     submitBtn.textContent = originalText;
   }
 });
+
+$("editFuneralBtn").onclick=editSelectedFuneral;
+$("deleteFuneralBtn").onclick=deleteSelectedFuneral;
+$("cancelEditFuneral").onclick=closeEditFuneral;
+$("editFuneralForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const id=$("editFuneralPanel").dataset.id;
+  if(!id){message($("funeralMessage"),"No funeral selected for editing.");return;}
+  const saveBtn=e.target.querySelector('button[type="submit"]');
+  const originalText=saveBtn.textContent;
+  saveBtn.disabled=true; saveBtn.textContent="⏳ Saving...";
+  try{
+    const data=await api(`/api/funerals/${id}`,{
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        deceased_name:$("editFuneralName").value.trim(),
+        funeral_date:$("editFuneralDate").value,
+        contribution_amount:$("editFuneralAmount").value
+      })
+    });
+    closeEditFuneral();
+    message($("funeralMessage"),`${data.message} Payments updated: ${data.payments_updated}.`,true);
+    await loadFunerals(true);
+  }catch(err){message($("funeralMessage"),err.message)}
+  finally{saveBtn.disabled=false;saveBtn.textContent=originalText}
+});
+
 $("funeralSelect").addEventListener("change",loadPayments);
 let paymentTimer;
 $("paymentSearch").addEventListener("input",()=>{clearTimeout(paymentTimer);paymentTimer=setTimeout(loadPayments,250)});

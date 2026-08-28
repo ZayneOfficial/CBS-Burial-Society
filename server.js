@@ -306,6 +306,88 @@ app.get("/api/funerals", async (req, res) => {
   }
 });
 
+app.put("/api/funerals/:id", async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid funeral ID." });
+    }
+
+    const funeral = await Funeral.findById(req.params.id);
+    if (!funeral) return res.status(404).json({ message: "Funeral not found." });
+
+    const deceased_name = String(req.body.deceased_name || "").trim();
+    const funeral_date = req.body.funeral_date;
+    const contribution_amount = Number(req.body.contribution_amount);
+
+    if (!deceased_name || !funeral_date || !Number.isFinite(contribution_amount) || contribution_amount < 0) {
+      return res.status(400).json({ message: "Deceased name, funeral date and valid amount are required." });
+    }
+
+    const parsedDate = new Date(funeral_date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ message: "Invalid funeral date." });
+    }
+
+    funeral.deceased_name = deceased_name;
+    funeral.funeral_date = parsedDate;
+    funeral.contribution_amount = contribution_amount;
+    await funeral.save();
+
+    // Keep denormalized funeral details synchronized in all payment records.
+    const paymentUpdate = await FuneralPayment.updateMany(
+      { funeral_id: funeral._id },
+      [
+        {
+          $set: {
+            funeral_deceased_name: funeral.deceased_name,
+            funeral_date: funeral.funeral_date,
+            contribution_amount: funeral.contribution_amount,
+            amount_paid: {
+              $cond: [
+                { $eq: ["$status", "PAID"] },
+                funeral.contribution_amount,
+                "$amount_paid"
+              ]
+            }
+          }
+        }
+      ]
+    );
+
+    res.json({
+      message: "Funeral updated successfully.",
+      funeral,
+      payments_updated: paymentUpdate.modifiedCount
+    });
+  } catch (err) {
+    console.error("Edit funeral error:", err);
+    res.status(500).json({ message: "Could not update funeral." });
+  }
+});
+
+app.delete("/api/funerals/:id", async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid funeral ID." });
+    }
+
+    const funeral = await Funeral.findById(req.params.id).lean();
+    if (!funeral) return res.status(404).json({ message: "Funeral not found." });
+
+    // Delete the payment records belonging only to this funeral, then the funeral itself.
+    const paymentDelete = await FuneralPayment.deleteMany({ funeral_id: funeral._id });
+    await Funeral.findByIdAndDelete(funeral._id);
+
+    res.json({
+      message: "Funeral and its payment records deleted.",
+      payments_deleted: paymentDelete.deletedCount
+    });
+  } catch (err) {
+    console.error("Delete funeral error:", err);
+    res.status(500).json({ message: "Could not delete funeral." });
+  }
+});
+
 app.post("/api/funerals", async (req, res) => {
   try {
     const deceased_name = String(req.body.deceased_name || "").trim();
