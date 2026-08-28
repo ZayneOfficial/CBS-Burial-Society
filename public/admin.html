@@ -4,121 +4,754 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin Dashboard</title>
+
   <link rel="stylesheet" href="style.css">
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
 </head>
+
 <body>
+
 <header class="app-header">
   <div class="header-inner">
-    <div><div class="header-title">Burial Society Admin</div><div class="header-sub" id="adminName"></div></div>
-    <button class="btn btn-light" id="logoutBtn">Logout</button>
+    <div>
+      <div class="header-title">Burial Society Admin</div>
+      <div class="header-sub" id="adminName"></div>
+    </div>
+
+    <button class="btn btn-light" id="logoutBtn">
+      Logout
+    </button>
   </div>
 </header>
 
+
 <main class="container">
+
+  <!-- =========================
+       STATISTICS
+  ========================== -->
+
   <section class="stats">
-    <div class="card"><div class="stat-label">TOTAL MEMBERS</div><div class="stat-value" id="totalMembers">0</div></div>
-    <div class="card"><div class="stat-label">PAID</div><div class="stat-value" id="paidCount">0 / 0</div></div>
-    <div class="card"><div class="stat-label">NOT PAID</div><div class="stat-value" id="notPaidCount">0 / 0</div></div>
-    <div class="card"><div class="stat-label">TOTAL COLLECTED</div><div class="stat-value" id="collected">R0</div></div>
+
+    <div class="card">
+      <div class="stat-label">TOTAL MEMBERS</div>
+      <div class="stat-value" id="totalMembers">0</div>
+    </div>
+
+    <div class="card">
+      <div class="stat-label">PAID</div>
+      <div class="stat-value" id="paidCount">0 / 0</div>
+    </div>
+
+    <div class="card">
+      <div class="stat-label">NOT PAID</div>
+      <div class="stat-value" id="notPaidCount">0 / 0</div>
+    </div>
+
+    <div class="card">
+      <div class="stat-label">TOTAL COLLECTED</div>
+      <div class="stat-value" id="collected">R0</div>
+    </div>
+
   </section>
 
+
   <div class="layout">
+
+
+    <!-- =========================
+         FUNERAL MANAGEMENT
+    ========================== -->
+
     <section class="card">
-      <div class="section-title"><h2>Funeral Management</h2></div>
+
+      <div class="section-title">
+        <h2>Funeral Management</h2>
+      </div>
+
       <form id="funeralForm" class="form-grid">
-        <div><label>Deceased Name</label><input id="deceasedName" required></div>
-        <div><label>Funeral Date</label><input id="funeralDate" type="date" required></div>
-        <div><label>Contribution Amount (R)</label><input id="funeralAmount" type="number" min="0" step="0.01" value="200" required></div>
-        <div><label>&nbsp;</label><button class="btn btn-dark" type="submit">Create Funeral + Payments for all active members</button></div>
+
+        <div>
+          <label>Deceased Name</label>
+          <input id="deceasedName" required>
+        </div>
+
+        <div>
+          <label>Funeral Date</label>
+          <input id="funeralDate" type="date" required>
+        </div>
+
+        <div>
+          <label>Contribution Amount (R)</label>
+          <input
+            id="funeralAmount"
+            type="number"
+            min="0"
+            step="0.01"
+            value="200"
+            required
+          >
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+
+          <button
+            class="btn btn-dark"
+            type="submit"
+          >
+            Create Funeral + Payments for all active members
+          </button>
+
+        </div>
+
       </form>
+
+
       <div id="funeralMessage" class="message"></div>
+
+
       <div class="toolbar funeral-actions">
-        <button class="btn btn-primary" type="button" id="editFuneralBtn">✏️ Edit Selected Funeral</button>
-        <button class="btn btn-red" type="button" id="deleteFuneralBtn">🗑️ Delete Selected Funeral</button>
+
+        <button
+          class="btn btn-primary"
+          type="button"
+          id="editFuneralBtn"
+        >
+          ✏️ Edit Selected Funeral
+        </button>
+
+        <button
+          class="btn btn-red"
+          type="button"
+          id="deleteFuneralBtn"
+        >
+          🗑️ Delete Selected Funeral
+        </button>
+
       </div>
-      <div id="editFuneralPanel" class="edit-panel hidden">
-        <div class="section-title"><h3>✏️ Edit Funeral</h3><button type="button" class="btn btn-light" id="cancelEditFuneral">Cancel</button></div>
-        <form id="editFuneralForm" class="form-grid">
-          <div><label>Deceased Name</label><input id="editFuneralName" required></div>
-          <div><label>Funeral Date</label><input id="editFuneralDate" type="date" required></div>
-          <div><label>Contribution Amount (R)</label><input id="editFuneralAmount" type="number" min="0" step="0.01" required></div>
-          <div class="full"><button class="btn btn-primary" type="submit">💾 Save Funeral Changes</button></div>
+
+
+      <!-- EDIT FUNERAL -->
+
+      <div
+        id="editFuneralPanel"
+        class="edit-panel hidden"
+      >
+
+        <div class="section-title">
+
+          <h3>✏️ Edit Funeral</h3>
+
+          <button
+            type="button"
+            class="btn btn-light"
+            id="cancelEditFuneral"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+
+        <form
+          id="editFuneralForm"
+          class="form-grid"
+        >
+
+          <div>
+            <label>Deceased Name</label>
+            <input id="editFuneralName" required>
+          </div>
+
+          <div>
+            <label>Funeral Date</label>
+            <input
+              id="editFuneralDate"
+              type="date"
+              required
+            >
+          </div>
+
+          <div>
+            <label>Contribution Amount (R)</label>
+            <input
+              id="editFuneralAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+            >
+          </div>
+
+          <div class="full">
+
+            <button
+              class="btn btn-primary"
+              type="submit"
+            >
+              💾 Save Funeral Changes
+            </button>
+
+          </div>
+
         </form>
-        <div class="small" style="margin-top:8px">Payment statuses and historical payment dates are not changed.</div>
+
+
+        <div
+          class="small"
+          style="margin-top:8px"
+        >
+          Payment statuses and historical payment dates are not changed.
+        </div>
+
       </div>
+
     </section>
 
+
+    <!-- =========================
+         HELPER APPROVALS
+    ========================== -->
+
     <section class="card">
-      <div class="section-title"><h2>Payment Marking</h2></div>
-      <div class="toolbar">
-        <select id="funeralSelect"><option value="">Select a funeral...</option></select>
-        <input id="paymentSearch" placeholder="Search VN, name, surname or phone">
+
+      <div class="section-title">
+
+        <h2>🔔 Pending Helper Approvals</h2>
+
+        <button
+          class="btn btn-light"
+          type="button"
+          id="refreshApprovals"
+        >
+          Refresh
+        </button>
+
       </div>
+
+
+      <div
+        id="approvalMessage"
+        class="message"
+      ></div>
+
+
+      <div
+        id="approvalSummary"
+        class="small"
+      >
+        Checking for pending changes...
+      </div>
+
+
+      <div
+        class="table-wrap"
+        style="margin-top:10px"
+      >
+
+        <table>
+
+          <thead>
+
+            <tr>
+              <th>Helper</th>
+              <th>Helper VN</th>
+              <th>Member VN</th>
+              <th>Member</th>
+              <th>Funeral</th>
+              <th>Current</th>
+              <th>Requested</th>
+              <th>Submitted</th>
+              <th>Action</th>
+            </tr>
+
+          </thead>
+
+
+          <tbody id="approvalBody">
+
+            <tr>
+
+              <td
+                colspan="9"
+                class="empty"
+              >
+                Loading pending changes...
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         PAYMENT MARKING
+    ========================== -->
+
+    <section class="card">
+
+      <div class="section-title">
+        <h2>Payment Marking</h2>
+      </div>
+
+
+      <div class="toolbar">
+
+        <select id="funeralSelect">
+
+          <option value="">
+            Select a funeral...
+          </option>
+
+        </select>
+
+
+        <input
+          id="paymentSearch"
+          placeholder="Search VN, name, surname or phone"
+        >
+
+      </div>
+
+
       <div class="filters">
-        <button class="btn btn-light filter active" data-filter="">ALL</button>
-        <button class="btn btn-green filter" data-filter="PAID">✅ PAID</button>
-        <button class="btn btn-red filter" data-filter="NOT PAID">❌ NOT PAID</button>
-        <button class="btn whatsapp" id="whatsappAll">📲 WhatsApp ALL NOT PAID</button>
+
+        <button
+          class="btn btn-light filter active"
+          data-filter=""
+        >
+          ALL
+        </button>
+
+        <button
+          class="btn btn-green filter"
+          data-filter="PAID"
+        >
+          ✅ PAID
+        </button>
+
+        <button
+          class="btn btn-red filter"
+          data-filter="NOT PAID"
+        >
+          ❌ NOT PAID
+        </button>
+
+        <button
+          class="btn whatsapp"
+          id="whatsappAll"
+        >
+          📲 WhatsApp ALL NOT PAID
+        </button>
+
       </div>
-      <div class="toolbar" style="margin-bottom:10px">
-        <button class="btn btn-dark" id="pdfAll">PDF ALL</button>
-        <button class="btn btn-green" id="pdfPaid">PDF PAID ONLY</button>
-        <button class="btn btn-red" id="pdfNotPaid">PDF NOT PAID ONLY</button>
-        <button class="btn btn-light" id="csvExport">CSV / Excel</button>
+
+
+      <div
+        class="toolbar"
+        style="margin-bottom:10px"
+      >
+
+        <button
+          class="btn btn-dark"
+          id="pdfAll"
+        >
+          PDF ALL
+        </button>
+
+        <button
+          class="btn btn-green"
+          id="pdfPaid"
+        >
+          PDF PAID ONLY
+        </button>
+
+        <button
+          class="btn btn-red"
+          id="pdfNotPaid"
+        >
+          PDF NOT PAID ONLY
+        </button>
+
+        <button
+          class="btn btn-light"
+          id="csvExport"
+        >
+          CSV / Excel
+        </button>
+
       </div>
-      <div id="paymentSummary" class="small">Select a funeral to begin.</div>
-      <div class="table-wrap" style="margin-top:10px">
+
+
+      <div
+        id="paymentSummary"
+        class="small"
+      >
+        Select a funeral to begin.
+      </div>
+
+
+      <div
+        class="table-wrap"
+        style="margin-top:10px"
+      >
+
         <table>
-          <thead><tr><th>VN Number</th><th>Name</th><th>Surname</th><th>Phone</th><th>Payment Status</th><th>Date Paid</th><th>Action</th><th>WhatsApp</th></tr></thead>
-          <tbody id="paymentBody"><tr><td colspan="8" class="empty">Select a funeral.</td></tr></tbody>
+
+          <thead>
+
+            <tr>
+
+              <th>VN Number</th>
+              <th>Name</th>
+              <th>Surname</th>
+              <th>Phone</th>
+              <th>Payment Status</th>
+              <th>Date Paid</th>
+              <th>Action</th>
+              <th>WhatsApp</th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="paymentBody">
+
+            <tr>
+
+              <td
+                colspan="8"
+                class="empty"
+              >
+                Select a funeral.
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
         </table>
+
       </div>
+
     </section>
 
+
+    <!-- =========================
+         MEMBERS MANAGEMENT
+    ========================== -->
+
     <section class="card">
-      <div class="section-title"><h2>Members Management</h2><span class="small">50 per page</span></div>
+
+      <div class="section-title">
+
+        <h2>Members Management</h2>
+
+        <span class="small">
+          50 per page
+        </span>
+
+      </div>
+
+
       <div class="toolbar">
-        <input id="memberSearch" placeholder="Search VN, name or phone">
-        <button class="btn btn-dark" id="refreshMembers">Refresh</button>
+
+        <input
+          id="memberSearch"
+          placeholder="Search VN, name or phone"
+        >
+
+        <button
+          class="btn btn-dark"
+          id="refreshMembers"
+        >
+          Refresh
+        </button>
+
       </div>
-      <form id="memberForm" class="form-grid" style="margin:10px 0">
-        <div><label>VN Number</label><input id="newVN" placeholder="VN501" required></div>
-        <div><label>Name</label><input id="newName" required></div>
-        <div><label>Surname</label><input id="newSurname" required></div>
-        <div><label>Phone</label><input id="newPhone" inputmode="tel" required></div>
-        <div><label>Password</label><input id="newPassword" value="1234"></div>
-        <div><label>Status</label><select id="newStatus"><option>Active</option><option>Inactive</option></select></div>
-        <div class="full"><button class="btn btn-primary" type="submit">Add Member</button></div>
+
+
+      <!-- ADD MEMBER -->
+
+      <form
+        id="memberForm"
+        class="form-grid"
+        style="margin:10px 0"
+      >
+
+        <div>
+          <label>VN Number</label>
+          <input
+            id="newVN"
+            placeholder="VN501"
+            required
+          >
+        </div>
+
+
+        <div>
+          <label>Name</label>
+          <input
+            id="newName"
+            required
+          >
+        </div>
+
+
+        <div>
+          <label>Surname</label>
+          <input
+            id="newSurname"
+            required
+          >
+        </div>
+
+
+        <div>
+          <label>Phone</label>
+          <input
+            id="newPhone"
+            inputmode="tel"
+            required
+          >
+        </div>
+
+
+        <div>
+          <label>Password</label>
+          <input
+            id="newPassword"
+            value="1234"
+          >
+        </div>
+
+
+        <div>
+          <label>Status</label>
+
+          <select id="newStatus">
+
+            <option>
+              Active
+            </option>
+
+            <option>
+              Inactive
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="full">
+
+          <button
+            class="btn btn-primary"
+            type="submit"
+          >
+            Add Member
+          </button>
+
+        </div>
+
       </form>
-      <div id="memberMessage" class="message"></div>
-      <div id="editMemberPanel" class="edit-panel hidden">
-        <div class="section-title"><h3>✏️ Edit Member</h3><button type="button" class="btn btn-light" id="cancelEditMember">Cancel</button></div>
-        <form id="editMemberForm" class="form-grid">
-          <div><label>VN Number</label><input id="editVN" readonly></div>
-          <div><label>Name</label><input id="editName" required></div>
-          <div><label>Surname</label><input id="editSurname" required></div>
-          <div><label>Phone</label><input id="editPhone" inputmode="tel" required></div>
-          <div><label>Status</label><select id="editStatus"><option>Active</option><option>Inactive</option></select></div>
-          <div><label>Join Date</label><input id="editJoinDate" type="date"></div>
-          <div class="full"><button class="btn btn-primary" type="submit">💾 Save Changes</button></div>
+
+
+      <div
+        id="memberMessage"
+        class="message"
+      ></div>
+
+
+      <!-- EDIT MEMBER -->
+
+      <div
+        id="editMemberPanel"
+        class="edit-panel hidden"
+      >
+
+        <div class="section-title">
+
+          <h3>✏️ Edit Member</h3>
+
+          <button
+            type="button"
+            class="btn btn-light"
+            id="cancelEditMember"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+
+        <form
+          id="editMemberForm"
+          class="form-grid"
+        >
+
+          <div>
+            <label>VN Number</label>
+            <input
+              id="editVN"
+              readonly
+            >
+          </div>
+
+
+          <div>
+            <label>Name</label>
+            <input
+              id="editName"
+              required
+            >
+          </div>
+
+
+          <div>
+            <label>Surname</label>
+            <input
+              id="editSurname"
+              required
+            >
+          </div>
+
+
+          <div>
+            <label>Phone</label>
+            <input
+              id="editPhone"
+              inputmode="tel"
+              required
+            >
+          </div>
+
+
+          <div>
+            <label>Status</label>
+
+            <select id="editStatus">
+
+              <option>
+                Active
+              </option>
+
+              <option>
+                Inactive
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div>
+            <label>Join Date</label>
+
+            <input
+              id="editJoinDate"
+              type="date"
+            >
+
+          </div>
+
+
+          <div class="full">
+
+            <button
+              class="btn btn-primary"
+              type="submit"
+            >
+              💾 Save Changes
+            </button>
+
+          </div>
+
         </form>
+
       </div>
+
+
+      <!-- MEMBERS TABLE -->
+
       <div class="table-wrap">
+
         <table>
-          <thead><tr><th>VN</th><th>Name</th><th>Surname</th><th>Phone</th><th>Status</th><th>Join Date</th><th>Action</th></tr></thead>
+
+          <thead>
+
+            <tr>
+
+              <th>VN</th>
+              <th>Name</th>
+              <th>Surname</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Join Date</th>
+              <th>Action</th>
+
+            </tr>
+
+          </thead>
+
+
           <tbody id="memberBody"></tbody>
+
         </table>
+
       </div>
+
+
+      <!-- PAGINATION -->
+
       <div class="pagination">
-        <button class="btn btn-light" id="prevPage">← Previous</button>
-        <span id="pageInfo" class="small">Page 1</span>
-        <button class="btn btn-light" id="nextPage">Next →</button>
+
+        <button
+          class="btn btn-light"
+          id="prevPage"
+        >
+          ← Previous
+        </button>
+
+
+        <span
+          id="pageInfo"
+          class="small"
+        >
+          Page 1
+        </span>
+
+
+        <button
+          class="btn btn-light"
+          id="nextPage"
+        >
+          Next →
+        </button>
+
       </div>
+
     </section>
+
   </div>
+
 </main>
+
+
 <script src="admin.js"></script>
+
 </body>
 </html>

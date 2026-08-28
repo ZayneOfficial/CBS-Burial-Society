@@ -60,6 +60,130 @@ paymentSchema.index({ vn_number: 1 });
 
 const Admin = mongoose.model("Admin", adminSchema);
 const Member = mongoose.model("Member", memberSchema);
+const helperSchema = new mongoose.Schema({
+  member_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Member",
+    required: true,
+    unique: true
+  },
+  vn_number: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+    trim: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  surname: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  status: {
+    type: String,
+    enum: ["Active", "Inactive"],
+    default: "Active"
+  }
+}, {
+  collection: "helpers",
+  timestamps: true
+});
+
+const Helper = mongoose.model("Helper", helperSchema);
+const paymentChangeRequestSchema = new mongoose.Schema({
+  payment_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "FuneralPayment",
+    required: true,
+    index: true
+  },
+
+  funeral_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Funeral",
+    required: true,
+    index: true
+  },
+
+  member_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Member",
+    required: true
+  },
+
+  vn_number: {
+    type: String,
+    required: true,
+    index: true,
+    trim: true
+  },
+
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+
+  surname: {
+    type: String,
+    required: true,
+    trim: true
+  },
+
+  old_status: {
+    type: String,
+    enum: ["PAID", "NOT PAID"],
+    required: true
+  },
+
+  new_status: {
+    type: String,
+    enum: ["PAID", "NOT PAID"],
+    required: true
+  },
+
+  helper_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Helper",
+    required: true
+  },
+
+  status: {
+    type: String,
+    enum: ["PENDING", "APPROVED", "REJECTED"],
+    default: "PENDING",
+    index: true
+  },
+
+  submitted_at: {
+    type: Date,
+    default: Date.now
+  },
+
+  approved_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
+    default: null
+  },
+
+  approved_at: {
+    type: Date,
+    default: null
+  }
+}, {
+  collection: "payment_change_requests"
+});
+
+const PaymentChangeRequest =
+  mongoose.model(
+    "PaymentChangeRequest",
+    paymentChangeRequestSchema
+  );
 const Funeral = mongoose.model("Funeral", funeralSchema);
 const FuneralPayment = mongoose.model("FuneralPayment", paymentSchema);
 
@@ -81,8 +205,7 @@ app.get("/api/health", async (req, res) => {
 
 app.post("/api/login", async (req, res) => {
   try {
-    const { email, password, vn_number, phone } = req.body;
-
+    const { email, password, vn_number, phone, full_name, helper_password } = req.body;
     
 
     if (email && password) {
@@ -95,6 +218,78 @@ app.post("/api/login", async (req, res) => {
         admin: { name: admin.name, email: admin.email }
       });
     }
+
+    // Helper login: existing member VN + full name + shared helper password
+if (vn_number && full_name && helper_password) {
+  const member = await Member.findOne({
+    vn_number: String(vn_number).trim()
+  });
+
+  if (!member) {
+    return res.status(401).json({
+      message: "Invalid VN Number or full name."
+    });
+  }
+
+  const submittedName = String(full_name)
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+  const memberName = `${member.name} ${member.surname}`
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+  if (submittedName !== memberName) {
+    return res.status(401).json({
+      message: "Invalid VN Number or full name."
+    });
+  }
+
+  if (String(helper_password) !== String(process.env.HELPER_PASSWORD || "")) {
+    return res.status(401).json({
+      message: "Invalid helper password."
+    });
+  }
+
+  if (member.status !== "Active") {
+    return res.status(403).json({
+      message: "This member account is inactive."
+    });
+  }
+
+  let helper = await Helper.findOne({
+    member_id: member._id
+  });
+
+  if (!helper) {
+    helper = await Helper.create({
+      member_id: member._id,
+      vn_number: member.vn_number,
+      name: member.name,
+      surname: member.surname,
+      status: "Active"
+    });
+  }
+
+  if (helper.status !== "Active") {
+    return res.status(403).json({
+      message: "This helper account is inactive."
+    });
+  }
+
+  return res.json({
+    role: "helper",
+    helper: {
+      helper_id: helper._id,
+      member_id: member._id,
+      vn_number: member.vn_number,
+      name: member.name,
+      surname: member.surname
+    }
+  });
+}
 
     if (vn_number && req.body.full_name) {
   const fullName = String(req.body.full_name)
@@ -523,6 +718,249 @@ app.put("/api/payments/:id/toggle", async (req, res) => {
     res.status(400).json({ message: "Could not toggle payment." });
   }
 });
+
+app.post("/api/payment-change-requests", async (req, res) => {
+  try {
+    const {
+      payment_id,
+      new_status,
+      helper_id
+    } = req.body;
+
+    if (!payment_id || !new_status || !helper_id) {
+      return res.status(400).json({
+        message: "Payment, status and helper are required."
+      });
+    }
+
+    if (!["PAID", "NOT PAID"].includes(new_status)) {
+      return res.status(400).json({
+        message: "Invalid payment status."
+      });
+    }
+
+    const helper = await Helper.findById(helper_id);
+
+    if (!helper || helper.status !== "Active") {
+      return res.status(403).json({
+        message: "Helper account is not active."
+      });
+    }
+
+    const payment =
+      await FuneralPayment.findById(payment_id);
+
+    if (!payment) {
+      return res.status(404).json({
+        message: "Payment record not found."
+      });
+    }
+
+    // Prevent unnecessary changes
+    if (payment.status === new_status) {
+      return res.status(400).json({
+        message: `Payment is already ${new_status}.`
+      });
+    }
+
+    // Do not allow multiple pending requests
+    const existing =
+      await PaymentChangeRequest.findOne({
+        payment_id: payment._id,
+        status: "PENDING"
+      });
+
+    if (existing) {
+      return res.status(409).json({
+        message:
+          "This payment already has a pending change awaiting admin approval."
+      });
+    }
+
+    const request =
+      await PaymentChangeRequest.create({
+        payment_id: payment._id,
+        funeral_id: payment.funeral_id,
+        member_id: payment.member_id,
+        vn_number: payment.vn_number,
+        name: payment.name,
+        surname: payment.surname,
+        old_status: payment.status,
+        new_status,
+        helper_id: helper._id,
+        status: "PENDING"
+      });
+
+    res.status(201).json({
+      message:
+        "Payment change submitted for admin approval.",
+      request
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message:
+        "Could not submit payment change.",
+      error: err.message
+    });
+  }
+});
+
+// ============================================================
+// ADMIN - PENDING HELPER PAYMENT CHANGE REQUESTS
+// ============================================================
+
+app.get("/api/payment-change-requests", async (req, res) => {
+  try {
+    const requests = await PaymentChangeRequest.find({
+      status: "PENDING"
+    })
+      .populate("helper_id", "vn_number name surname")
+      .populate("funeral_id", "deceased_name funeral_date contribution_amount")
+      .sort({ submitted_at: 1 })
+      .lean();
+
+    res.json({
+      requests,
+      count: requests.length
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "Could not load pending helper approvals."
+    });
+  }
+});
+
+
+// ============================================================
+// ADMIN - APPROVE HELPER PAYMENT CHANGE
+// ============================================================
+
+app.put("/api/payment-change-requests/:id/approve", async (req, res) => {
+  try {
+    const request =
+      await PaymentChangeRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Approval request not found."
+      });
+    }
+
+    if (request.status !== "PENDING") {
+      return res.status(400).json({
+        message:
+          `This request has already been ${request.status.toLowerCase()}.`
+      });
+    }
+
+    const payment =
+      await FuneralPayment.findById(request.payment_id);
+
+    if (!payment) {
+      return res.status(404).json({
+        message: "Original payment record no longer exists."
+      });
+    }
+
+    // Make sure the payment has not changed since
+    // the helper submitted the request.
+    if (payment.status !== request.old_status) {
+      request.status = "REJECTED";
+      request.approved_at = new Date();
+      await request.save();
+
+      return res.status(409).json({
+        message:
+          "The payment changed after the helper submitted the request. The request was rejected for safety."
+      });
+    }
+
+    // Apply the requested status
+    payment.status = request.new_status;
+
+    if (request.new_status === "PAID") {
+      payment.payment_date = new Date();
+      payment.amount_paid =
+        Number(payment.contribution_amount || 0);
+    } else {
+      payment.payment_date = null;
+      payment.amount_paid = 0;
+    }
+
+    await payment.save();
+
+    // Mark request as approved
+    request.status = "APPROVED";
+    request.approved_at = new Date();
+
+    await request.save();
+
+    res.json({
+      message: "Payment change approved successfully.",
+      payment,
+      request
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "Could not approve payment change.",
+      error: err.message
+    });
+  }
+});
+
+
+// ============================================================
+// ADMIN - REJECT HELPER PAYMENT CHANGE
+// ============================================================
+
+app.put("/api/payment-change-requests/:id/reject", async (req, res) => {
+  try {
+    const request =
+      await PaymentChangeRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Approval request not found."
+      });
+    }
+
+    if (request.status !== "PENDING") {
+      return res.status(400).json({
+        message:
+          `This request has already been ${request.status.toLowerCase()}.`
+      });
+    }
+
+    request.status = "REJECTED";
+    request.approved_at = new Date();
+
+    await request.save();
+
+    res.json({
+      message: "Payment change rejected.",
+      request
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(400).json({
+      message: "Could not reject payment change.",
+      error: err.message
+    });
+  }
+});
+
+
 
 app.get("/api/member-payments/:vn", async (req, res) => {
   try {

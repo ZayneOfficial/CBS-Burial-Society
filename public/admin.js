@@ -1,3 +1,11 @@
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 const session = JSON.parse(localStorage.getItem("session") || "null");
 if (!session || session.role !== "admin") location.href = "/";
 
@@ -385,3 +393,504 @@ $("csvExport").onclick=()=>{
 };
 $("logoutBtn").onclick=()=>{localStorage.removeItem("session");location.href="/"};
 (async()=>{await loadMembers();await loadFunerals();})();
+
+
+// ============================================================
+// PENDING HELPER APPROVALS
+// ============================================================
+
+async function loadPendingApprovals() {
+  const body = $("approvalBody");
+  const summary = $("approvalSummary");
+
+  if (!body) return;
+
+  body.innerHTML = `
+    <tr>
+      <td colspan="9" class="empty">
+        Loading pending changes...
+      </td>
+    </tr>
+  `;
+
+  try {
+    const res = await fetch("/api/payment-change-requests");
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Could not load approvals.");
+    }
+
+    const requests = data.requests || [];
+
+    summary.textContent =
+      `${requests.length} pending helper change${requests.length === 1 ? "" : "s"}.`;
+
+    if (!requests.length) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="9" class="empty">
+            No pending helper changes.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    body.innerHTML = requests.map(request => {
+      const helper = request.helper_id || {};
+      const funeral = request.funeral_id || {};
+
+      const helperName =
+        `${helper.name || ""} ${helper.surname || ""}`.trim() || "Unknown";
+
+      const memberName =
+        `${request.name || ""} ${request.surname || ""}`.trim();
+
+      const funeralName =
+        funeral.deceased_name || "Unknown";
+
+      const submitted =
+        request.submitted_at
+          ? new Date(request.submitted_at).toLocaleString()
+          : "-";
+
+      return `
+        <tr>
+          <td>${escapeHtml(helperName)}</td>
+
+          <td>${escapeHtml(helper.vn_number || "-")}</td>
+
+          <td>${escapeHtml(request.vn_number || "-")}</td>
+
+          <td>${escapeHtml(memberName)}</td>
+
+          <td>${escapeHtml(funeralName)}</td>
+
+          <td>
+            <strong>${escapeHtml(request.old_status)}</strong>
+          </td>
+
+          <td>
+            <strong>${escapeHtml(request.new_status)}</strong>
+          </td>
+
+          <td>${escapeHtml(submitted)}</td>
+
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+
+              <button
+                class="btn btn-green"
+                type="button"
+                onclick="approvePaymentChange('${request._id}')"
+              >
+                ✅ Approve
+              </button>
+
+              <button
+                class="btn btn-red"
+                type="button"
+                onclick="rejectPaymentChange('${request._id}')"
+              >
+                ❌ Reject
+              </button>
+
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+  } catch (err) {
+    console.error(err);
+
+    summary.textContent = "Could not load pending approvals.";
+
+    body.innerHTML = `
+      <tr>
+        <td colspan="9" class="empty">
+          ${escapeHtml(err.message)}
+        </td>
+      </tr>
+    `;
+  }
+}
+
+
+// ============================================================
+// APPROVE
+// ============================================================
+
+async function approvePaymentChange(id) {
+
+  if (!confirm(
+    "Approve this payment change?\n\n" +
+    "The official payment record will be updated."
+  )) {
+    return;
+  }
+
+  try {
+
+    const res = await fetch(
+      `/api/payment-change-requests/${encodeURIComponent(id)}/approve`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message || "Could not approve payment change."
+      );
+    }
+
+    alert("✅ Payment change approved.");
+
+    await loadPendingApprovals();
+
+    // Refresh the current payment table if a funeral
+    // is currently selected.
+    if ($("funeralSelect") && $("funeralSelect").value) {
+      await loadPayments();
+    }
+
+  } catch (err) {
+
+    alert(`❌ ${err.message}`);
+
+  }
+}
+
+
+// ============================================================
+// REJECT
+// ============================================================
+
+async function rejectPaymentChange(id) {
+
+  if (!confirm(
+    "Reject this payment change?\n\n" +
+    "The official payment record will NOT be changed."
+  )) {
+    return;
+  }
+
+  try {
+
+    const res = await fetch(
+      `/api/payment-change-requests/${encodeURIComponent(id)}/reject`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message || "Could not reject payment change."
+      );
+    }
+
+    alert("❌ Payment change rejected.");
+
+    await loadPendingApprovals();
+
+  } catch (err) {
+
+    alert(`❌ ${err.message}`);
+
+  }
+}
+
+
+// ============================================================
+// REFRESH APPROVALS BUTTON
+// ============================================================
+
+if ($("refreshApprovals")) {
+  $("refreshApprovals").addEventListener(
+    "click",
+    loadPendingApprovals
+  );
+}
+
+
+// Load approvals when Admin Dashboard opens
+loadPendingApprovals();
+
+// ============================================================
+// PENDING HELPER APPROVALS
+// ============================================================
+
+async function loadPendingApprovals() {
+  const body = $("approvalBody");
+  const summary = $("approvalSummary");
+
+  if (!body) return;
+
+  body.innerHTML = `
+    <tr>
+      <td colspan="9" class="empty">
+        Loading pending changes...
+      </td>
+    </tr>
+  `;
+
+  try {
+    const res = await fetch("/api/payment-change-requests");
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message || "Could not load approvals."
+      );
+    }
+
+    const requests = data.requests || [];
+
+    summary.textContent =
+      `${requests.length} pending helper change${requests.length === 1 ? "" : "s"}.`;
+
+    if (!requests.length) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="9" class="empty">
+            No pending helper changes.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    body.innerHTML = requests.map(request => {
+      const helper = request.helper_id || {};
+      const funeral = request.funeral_id || {};
+
+      const helperName =
+        `${helper.name || ""} ${helper.surname || ""}`.trim() ||
+        "Unknown";
+
+      const memberName =
+        `${request.name || ""} ${request.surname || ""}`.trim();
+
+      const funeralName =
+        funeral.deceased_name || "Unknown";
+
+      const submitted =
+        request.submitted_at
+          ? new Date(request.submitted_at).toLocaleString()
+          : request.created_at
+            ? new Date(request.created_at).toLocaleString()
+            : "-";
+
+      return `
+        <tr>
+
+          <td>
+            ${escapeHtml(helperName)}
+          </td>
+
+          <td>
+            ${escapeHtml(helper.vn_number || "-")}
+          </td>
+
+          <td>
+            ${escapeHtml(request.vn_number || "-")}
+          </td>
+
+          <td>
+            ${escapeHtml(memberName)}
+          </td>
+
+          <td>
+            ${escapeHtml(funeralName)}
+          </td>
+
+          <td>
+            <strong>
+              ${escapeHtml(request.old_status || "-")}
+            </strong>
+          </td>
+
+          <td>
+            <strong>
+              ${escapeHtml(request.new_status || "-")}
+            </strong>
+          </td>
+
+          <td>
+            ${escapeHtml(submitted)}
+          </td>
+
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+
+              <button
+                class="btn btn-green"
+                type="button"
+                onclick="approvePaymentChange('${request._id}')"
+              >
+                ✅ Approve
+              </button>
+
+              <button
+                class="btn btn-red"
+                type="button"
+                onclick="rejectPaymentChange('${request._id}')"
+              >
+                ❌ Reject
+              </button>
+
+            </div>
+          </td>
+
+        </tr>
+      `;
+    }).join("");
+
+  } catch (err) {
+
+    console.error(err);
+
+    summary.textContent =
+      "Could not load pending approvals.";
+
+    body.innerHTML = `
+      <tr>
+        <td colspan="9" class="empty">
+          ${escapeHtml(err.message)}
+        </td>
+      </tr>
+    `;
+  }
+}
+
+
+// ============================================================
+// APPROVE HELPER CHANGE
+// ============================================================
+
+async function approvePaymentChange(id) {
+
+  if (!confirm(
+    "Approve this payment change?\n\n" +
+    "The official payment record will be updated."
+  )) {
+    return;
+  }
+
+  try {
+
+    const res = await fetch(
+      `/api/payment-change-requests/${encodeURIComponent(id)}/approve`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message ||
+        "Could not approve payment change."
+      );
+    }
+
+    alert("✅ Payment change approved.");
+
+    await loadPendingApprovals();
+
+    if (
+      $("funeralSelect") &&
+      $("funeralSelect").value
+    ) {
+      await loadPayments();
+    }
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(`❌ ${err.message}`);
+  }
+}
+
+
+// ============================================================
+// REJECT HELPER CHANGE
+// ============================================================
+
+async function rejectPaymentChange(id) {
+
+  if (!confirm(
+    "Reject this payment change?\n\n" +
+    "The official payment record will NOT be changed."
+  )) {
+    return;
+  }
+
+  try {
+
+    const res = await fetch(
+      `/api/payment-change-requests/${encodeURIComponent(id)}/reject`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message ||
+        "Could not reject payment change."
+      );
+    }
+
+    alert("❌ Payment change rejected.");
+
+    await loadPendingApprovals();
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(`❌ ${err.message}`);
+  }
+}
+
+
+// ============================================================
+// REFRESH APPROVALS
+// ============================================================
+
+if ($("refreshApprovals")) {
+
+  $("refreshApprovals").addEventListener(
+    "click",
+    loadPendingApprovals
+  );
+
+}
+
+
+// Load pending approvals when Admin Dashboard opens
+loadPendingApprovals();
