@@ -35,8 +35,9 @@
       <form id="memberForm">
         <label>VN Number</label>
         <input id="memberVN" placeholder="VN001" required>
-        <label>Phone</label>
-        <input id="memberPhone" inputmode="tel" placeholder="0711111111" required>
+
+        <label>Full Name</label>
+        <input id="memberFullName" placeholder="John Smith" autocomplete="name" required>
         <button class="btn btn-primary btn-large" type="submit">Login as Member</button>
       </form>
     </section>
@@ -83,10 +84,10 @@ document.getElementById("memberForm").addEventListener("submit", async e => {
     const res = await fetch("/api/login", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        vn_number: memberVN.value,
-        phone: memberPhone.value
-      })
+     body: JSON.stringify({
+  vn_number: memberVN.value.trim(),
+  full_name: memberFullName.value.trim()
+})
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);

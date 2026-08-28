@@ -96,16 +96,38 @@ app.post("/api/login", async (req, res) => {
       });
     }
 
-    if (vn_number && phone) {
-      const member = await Member.findOne({
-        vn_number: String(vn_number).trim(),
-        phone: String(phone).trim()
-      });
-      if (!member) return res.status(401).json({ message: "Invalid VN Number or phone." });
-      return res.json({ role: "member", member: publicMember(member) });
-    }
+    if (vn_number && req.body.full_name) {
+  const fullName = String(req.body.full_name)
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
 
-    return res.status(400).json({ message: "Provide admin email/password or member VN/phone." });
+  const member = await Member.findOne({
+    vn_number: String(vn_number).trim()
+  });
+
+  if (!member) {
+    return res.status(401).json({ message: "Invalid VN Number or full name." });
+  }
+
+  const memberFullName = `${member.name} ${member.surname}`
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+  if (memberFullName !== fullName) {
+    return res.status(401).json({ message: "Invalid VN Number or full name." });
+  }
+
+  return res.json({
+    role: "member",
+    member: publicMember(member)
+  });
+}
+
+return res.status(400).json({
+  message: "Provide admin email/password or member VN/full name."
+});
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Login failed." });
