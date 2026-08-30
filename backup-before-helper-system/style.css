@@ -71,7 +71,17 @@ button {
   margin-bottom: 22px;
 }
 
-
+.brand-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 12px;
+  background: #111;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
 
 h1,
 h2,
@@ -621,7 +631,13 @@ tbody tr:last-child td {
     font-size: 21px;
   }
 
-  
+  .brand-icon {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    font-size: 20px;
+  }
+
   .tabs {
     gap: 5px;
   }
@@ -763,8 +779,8 @@ tbody tr:last-child td {
 }
 
 .brand-icon{
-  width:100px;
-  height:100px;
+  width:58px;
+  height:58px;
   border-radius:12px;
   background:#fff;
   display:grid;

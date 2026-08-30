@@ -9,9 +9,7 @@
 <body class="login-page">
   <main class="login-card">
     <div class="brand">
-      <div class="brand-icon">
-  <img src="/images/cbs.png" alt="Cape Town Burial Society Logo">
-</div>
+      <div class="brand-icon">✝</div>
       <div>
         <h1>Burial Society</h1>
         <p>Management System</p>
@@ -19,10 +17,9 @@
     </div>
 
     <div class="tabs">
-  <button class="tab active" data-tab="admin">Admin Login</button>
-  <button class="tab" data-tab="member">Member Login</button>
-  <button class="tab" data-tab="helper">Helper Login</button>
-</div>
+      <button class="tab active" data-tab="admin">Admin Login</button>
+      <button class="tab" data-tab="member">Member Login</button>
+    </div>
 
     <section id="admin-login" class="login-panel">
       <form id="adminForm">
@@ -38,29 +35,11 @@
       <form id="memberForm">
         <label>VN Number</label>
         <input id="memberVN" placeholder="VN001" required>
-
-        <label>Full Name</label>
-        <input id="memberFullName" placeholder="John Smith" autocomplete="name" required>
+        <label>Phone</label>
+        <input id="memberPhone" inputmode="tel" placeholder="0711111111" required>
         <button class="btn btn-primary btn-large" type="submit">Login as Member</button>
       </form>
     </section>
-
-    <section id="helper-login" class="login-panel hidden">
-  <form id="helperForm">
-    <label>VN Number</label>
-    <input id="helperVN" placeholder="VN001" required>
-
-    <label>Full Name</label>
-    <input id="helperName" placeholder="John Smith" required>
-
-    <label>Helper Password</label>
-    <input id="helperPassword" type="password" required>
-
-    <button class="btn btn-primary btn-large" type="submit">
-      Login as Helper
-    </button>
-  </form>
-</section>
 
    
   </main>
@@ -71,8 +50,7 @@ tabs.forEach(tab => tab.addEventListener("click", () => {
   tabs.forEach(t => t.classList.remove("active"));
   tab.classList.add("active");
   document.getElementById("admin-login").classList.toggle("hidden", tab.dataset.tab !== "admin");
-document.getElementById("member-login").classList.toggle("hidden", tab.dataset.tab !== "member");
-document.getElementById("helper-login").classList.toggle("hidden", tab.dataset.tab !== "helper");
+  document.getElementById("member-login").classList.toggle("hidden", tab.dataset.tab !== "member");
 }));
 
 const message = document.getElementById("loginMessage");
@@ -105,10 +83,10 @@ document.getElementById("memberForm").addEventListener("submit", async e => {
     const res = await fetch("/api/login", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-     body: JSON.stringify({
-  vn_number: memberVN.value.trim(),
-  full_name: memberFullName.value.trim()
-})
+      body: JSON.stringify({
+        vn_number: memberVN.value,
+        phone: memberPhone.value
+      })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
@@ -120,39 +98,6 @@ document.getElementById("memberForm").addEventListener("submit", async e => {
     }));
     location.href = "/member.html";
   } catch (err) { showMessage(err.message); }
-});
-
-document.getElementById("helperForm").addEventListener("submit", async e => {
-  e.preventDefault();
-
-  try {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        vn_number: helperVN.value,
-        full_name: helperName.value,
-        helper_password: helperPassword.value
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.message);
-
-    localStorage.setItem("session", JSON.stringify({
-      role: "helper",
-      helper_id: data.helper.helper_id,
-      member_id: data.helper.member_id,
-      vn_number: data.helper.vn_number,
-      helper: data.helper
-    }));
-
-    location.href = "/helper.html";
-
-  } catch (err) {
-    showMessage(err.message);
-  }
 });
 </script>
 </body>
