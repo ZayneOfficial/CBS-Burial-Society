@@ -187,6 +187,74 @@ const PaymentChangeRequest =
 const Funeral = mongoose.model("Funeral", funeralSchema);
 const FuneralPayment = mongoose.model("FuneralPayment", paymentSchema);
 
+// ============================================================
+// SYNC CURRENT MEMBERS INTO AN EXISTING FUNERAL
+// ============================================================
+// Adds only members who do not yet have a payment record for
+// this funeral. Existing PAID / NOT PAID records are untouched.
+// ============================================================
+
+async function syncFuneralMembers(funeral) {
+  const activeMembers = await Member.find({ status: "Active" })
+    .select("_id vn_number name surname phone")
+    .lean();
+
+  if (!activeMembers.length) {
+    return 0;
+  }
+
+  const existingPayments = await FuneralPayment.find({
+    funeral_id: funeral._id
+  })
+    .select("member_id")
+    .lean();
+
+  const existingMemberIds = new Set(
+    existingPayments.map(payment => String(payment.member_id))
+  );
+
+  const missingMembers = activeMembers.filter(
+    member => !existingMemberIds.has(String(member._id))
+  );
+
+  if (!missingMembers.length) {
+    return 0;
+  }
+
+  const operations = missingMembers.map(member => ({
+    updateOne: {
+      filter: {
+        funeral_id: funeral._id,
+        member_id: member._id
+      },
+      update: {
+        $setOnInsert: {
+          funeral_id: funeral._id,
+          funeral_deceased_name: funeral.deceased_name,
+          funeral_date: funeral.funeral_date,
+          contribution_amount: funeral.contribution_amount,
+          member_id: member._id,
+          vn_number: member.vn_number,
+          name: member.name,
+          surname: member.surname,
+          phone: member.phone,
+          status: "NOT PAID",
+          payment_date: null,
+          amount_paid: 0,
+          created_at: new Date()
+        }
+      },
+      upsert: true
+    }
+  }));
+
+  const result = await FuneralPayment.bulkWrite(operations, {
+    ordered: false
+  });
+
+  return result.upsertedCount || 0;
+}
+
 function publicMember(member) {
   return {
     member_id: member._id,
@@ -656,12 +724,40 @@ app.post("/api/funerals", async (req, res) => {
 
 app.get("/api/payments/:funeralId", async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.funeralId)) {
+      return res.status(400).json({
+        message: "Invalid funeral ID."
+      });
+    }
+
     const funeralId = new mongoose.Types.ObjectId(req.params.funeralId);
+
+    const funeral = await Funeral.findById(funeralId).lean();
+
+    if (!funeral) {
+      return res.status(404).json({
+        message: "Funeral not found."
+      });
+    }
+
+    // IMPORTANT:
+    // Make sure all current active members exist on this funeral
+    // before loading the payment list.
+    //
+    // Existing payment records are NOT changed.
+    // Only missing members are added as NOT PAID.
+    const membersAdded = await syncFuneralMembers(funeral);
+
     const status = req.query.status;
     const search = String(req.query.search || "").trim();
 
-    const query = { funeral_id: funeralId };
-    if (status === "PAID" || status === "NOT PAID") query.status = status;
+    const query = {
+      funeral_id: funeralId
+    };
+
+    if (status === "PAID" || status === "NOT PAID") {
+      query.status = status;
+    }
 
     if (search) {
       query.$or = [
@@ -676,12 +772,20 @@ app.get("/api/payments/:funeralId", async (req, res) => {
       .sort({ vn_number: 1 })
       .lean();
 
-    const allForSummary = await FuneralPayment.find({ funeral_id: funeralId })
+    const allForSummary = await FuneralPayment.find({
+      funeral_id: funeralId
+    })
       .select("status amount_paid contribution_amount")
       .lean();
 
-    const paid = allForSummary.filter(p => p.status === "PAID");
-    const collected = paid.reduce((sum, p) => sum + Number(p.amount_paid || 0), 0);
+    const paid = allForSummary.filter(
+      payment => payment.status === "PAID"
+    );
+
+    const collected = paid.reduce(
+      (sum, payment) => sum + Number(payment.amount_paid || 0),
+      0
+    );
 
     res.json({
       payments,
@@ -690,12 +794,20 @@ app.get("/api/payments/:funeralId", async (req, res) => {
         paid: paid.length,
         notPaid: allForSummary.length - paid.length,
         collected
-      }
+      },
+      members_added: membersAdded
     });
+
   } catch (err) {
-    res.status(400).json({ message: "Invalid funeral ID or could not load payments." });
+    console.error("Load funeral payments error:", err);
+
+    res.status(400).json({
+      message: "Invalid funeral ID or could not load payments."
+    });
   }
 });
+
+    
 
 app.put("/api/payments/:id/toggle", async (req, res) => {
   try {
