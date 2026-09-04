@@ -187,6 +187,28 @@ const PaymentChangeRequest =
 const Funeral = mongoose.model("Funeral", funeralSchema);
 const FuneralPayment = mongoose.model("FuneralPayment", paymentSchema);
 
+const visitSchema = new mongoose.Schema({
+  page: {
+    type: String,
+    default: "/"
+  },
+  user_agent: {
+    type: String,
+    default: ""
+  },
+  referrer: {
+    type: String,
+    default: ""
+  },
+  visited_at: {
+    type: Date,
+    default: Date.now,
+    index: true
+  }
+}, { collection: "website_visits" });
+
+const WebsiteVisit = mongoose.model("WebsiteVisit", visitSchema);
+
 // ============================================================
 // SYNC CURRENT MEMBERS INTO AN EXISTING FUNERAL
 // ============================================================
@@ -266,6 +288,65 @@ function publicMember(member) {
     join_date: member.join_date
   };
 }
+
+app.post("/api/visits", async (req, res) => {
+  try {
+    await WebsiteVisit.create({
+      page: String(req.body.page || "/").slice(0, 200),
+      user_agent: String(req.get("user-agent") || "").slice(0, 500),
+      referrer: String(req.get("referer") || "").slice(0, 500)
+    });
+
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error("Visitor tracking error:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+app.get("/api/visits/stats", async (req, res) => {
+  try {
+    const now = new Date();
+
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [today, thisWeek, thisMonth, total] = await Promise.all([
+      WebsiteVisit.countDocuments({
+        visited_at: { $gte: startOfDay }
+      }),
+
+      WebsiteVisit.countDocuments({
+        visited_at: { $gte: startOfWeek }
+      }),
+
+      WebsiteVisit.countDocuments({
+        visited_at: { $gte: startOfMonth }
+      }),
+
+      WebsiteVisit.countDocuments()
+    ]);
+
+    res.json({
+      today,
+      thisWeek,
+      thisMonth,
+      total
+    });
+
+  } catch (err) {
+    console.error("Visitor statistics error:", err);
+    res.status(500).json({
+      message: "Could not load visitor statistics."
+    });
+  }
+});
 
 app.get("/api/health", async (req, res) => {
   res.json({ ok: true, database: mongoose.connection.readyState === 1 });
