@@ -894,3 +894,50 @@ if ($("refreshApprovals")) {
 
 // Load pending approvals when Admin Dashboard opens
 loadPendingApprovals();
+
+async function closeSelectedFuneral(){
+  const id = $("funeralSelect").value;
+
+  if(!id){
+    alert("Select a funeral first.");
+    return;
+  }
+
+  const option = $("funeralSelect").selectedOptions[0];
+  const label = option ? option.textContent : "this funeral";
+
+  const confirmed = confirm(
+    "🔒 CLOSE FUNERAL\n\n" +
+    `Are you sure you want to close:\n${label}\n\n` +
+    "After closing:\n" +
+    "• Admins cannot mark payments\n" +
+    "• Helpers cannot submit payment changes\n" +
+    "• Payments can still be viewed\n\n" +
+    "This action is intended to stop further payment marking."
+  );
+
+  if(!confirmed) return;
+
+  try{
+    const data = await api(`/api/funerals/${id}/close`, {
+      method: "PUT"
+    });
+
+    message(
+      $("funeralMessage"),
+      data.message,
+      true
+    );
+
+    await loadFunerals();
+
+    $("funeralSelect").value = id;
+
+    await loadPayments();
+
+  }catch(e){
+    message($("funeralMessage"), e.message);
+  }
+}
+
+$("closeSelectedFuneral").onclick = closeSelectedFuneral;

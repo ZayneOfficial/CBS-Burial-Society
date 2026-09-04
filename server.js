@@ -812,7 +812,28 @@ app.get("/api/payments/:funeralId", async (req, res) => {
 app.put("/api/payments/:id/toggle", async (req, res) => {
   try {
     const payment = await FuneralPayment.findById(req.params.id);
-    if (!payment) return res.status(404).json({ message: "Payment not found." });
+
+    if (!payment) {
+      return res.status(404).json({
+        message: "Payment not found."
+      });
+    }
+
+    // Do not allow payment marking when the funeral is closed.
+    const funeral = await Funeral.findById(payment.funeral_id)
+      .select("status");
+
+    if (!funeral) {
+      return res.status(404).json({
+        message: "Funeral not found."
+      });
+    }
+
+    if (funeral.status === "Closed") {
+      return res.status(403).json({
+        message: "This funeral is closed. Payment marking is disabled."
+      });
+    }
 
     if (payment.status === "PAID") {
       payment.status = "NOT PAID";
@@ -825,9 +846,15 @@ app.put("/api/payments/:id/toggle", async (req, res) => {
     }
 
     await payment.save();
+
     res.json({ payment });
+
   } catch (err) {
-    res.status(400).json({ message: "Could not toggle payment." });
+    console.error("Toggle payment error:", err);
+
+    res.status(400).json({
+      message: "Could not toggle payment."
+    });
   }
 });
 
@@ -865,6 +892,23 @@ app.post("/api/payment-change-requests", async (req, res) => {
     if (!payment) {
       return res.status(404).json({
         message: "Payment record not found."
+      });
+    }
+
+        // Do not allow helpers to submit payment changes
+    // when the funeral is closed.
+    const funeral = await Funeral.findById(payment.funeral_id)
+      .select("status");
+
+    if (!funeral) {
+      return res.status(404).json({
+        message: "Funeral not found."
+      });
+    }
+
+    if (funeral.status === "Closed") {
+      return res.status(403).json({
+        message: "This funeral is closed. Payment marking is disabled."
       });
     }
 
