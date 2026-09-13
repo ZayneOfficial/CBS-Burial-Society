@@ -9,3 +9,5 @@ backup-before-funeral-edit-delete/
 backups/
 *.tar.gz
 *.bson
+
+Code backups/
